@@ -1,0 +1,749 @@
+openapi: 3.0.3
+info:
+  title: GemLogin - OpenAPI 3.0
+  description: |-
+    This API provides operations for managing profiles and groups in the GemLogin system. It allows users to create, retrieve, and manipulate profiles and groups.  
+  version: 1.0.11
+servers:
+  - url: http://localhost:1010/api
+tags:
+  - name: versions
+    description: Operations related to versions of browsers.
+  - name: groups
+    description: Operations related to groups
+  - name: profiles
+    description: Operations related to profiles
+paths:
+  /browser_versions:
+    get:
+      summary: Retrieve a list of browser versions
+      description: This endpoint fetches browser versions from an external service and returns them in a structured format.
+      tags:
+        - versions
+      responses:
+        '200':
+          description: A successful response containing a list of browser versions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "OK"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BrowserVersion'
+        '500':
+          description: Server error, when unable to fetch data from the external service.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "HTTP error! status: 404"
+  /groups:
+    get:
+      tags:
+        - groups
+      summary: Retrieve a list of groups
+      description: Retrieve a list of all groups with their basic details
+      operationId: getGroups
+      responses:
+        '200':
+          description: Successful operation, returns a list of groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "success"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+        '500':
+          description: Server error
+
+  /profiles/delete/{id}:
+    get:
+      tags:
+        - profiles
+      summary: Delete a profile by ID
+      description: Deletes the profile specified by its ID
+      operationId: deleteProfileById
+      parameters:
+        - name: id
+          in: path
+          description: ID of the profile to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+          '200':
+            description: Successful operation, profile deleted
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    message:
+                      type: string
+                      example: "Xóa thành công"
+                    data:
+                      type: string
+                      example: null
+          '404':
+            description: Profile not found
+          '500':
+            description: Server error
+
+  /profiles/start/{id}:
+    get:
+      tags:
+        - profiles
+      summary: Start a profile by ID
+      description: Launches a Chrome browser instance with the configuration specified in the profile ID. The browser is configured with extensions, user data, and proxy settings as needed.
+      operationId: startProfileById
+      parameters:
+        - name: id
+          in: path
+          description: ID of the profile to start
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: addination_args
+          in: query
+          description: Additional arguments to pass to the Chrome browser. Arguments should be separated by spaces.
+          schema:
+            type: string
+            example: "--lang=vi-VN --disable-notifications"
+        - name: win_pos
+          in: query
+          description: Position of the browser window in the format `x,y`.
+          schema:
+            type: string
+            example: "100,200"
+        - name: win_size
+          in: query
+          description: Size of the browser window in the format `width,height`.
+          schema:
+            type: string
+            example: "1280,720"
+        - name: win_scale
+          in: query
+          description: Scale factor for the browser's device scale.
+          schema:
+            type: string
+            example: "1.5"
+      responses:
+        '200':
+          description: Profile successfully started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "OK"
+                  data:
+                    type: object
+                    properties:
+                      profile_id:
+                        type: integer
+                        example: 123
+                      browser_location:
+                        type: string
+                        example: "C:\\path\\to\\chrome.exe"
+                      remote_debugging_address:
+                        type: string
+                        example: "127.0.0.1:9222"
+                      driver_path:
+                        type: string
+                        example: "C:\\path\\to\\gemlogindriver.exe"
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid parameters provided."
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Profile ID does not exist."
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An unexpected error occurred."
+      security:
+        - api_key: []
+        - profile_auth:
+            - write:profiles
+            - read:profiles
+
+  /profiles/close/{id}:
+    get:
+      tags:
+        - profiles
+      summary: Close a browser instance by profile ID
+      description: Closes the browser instance associated with the given profile ID and updates the profile status to '1' (indicating inactive or closed). If the profile is not found, the status is updated to '1' regardless.
+      operationId: closeProfileById
+      parameters:
+        - name: id
+          in: path
+          description: ID of the profile to close
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Browser successfully closed and profile status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Đóng thành công"
+        '404':
+          description: Profile not found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An unexpected error occurred."
+      security:
+        - api_key: []
+        - profile_auth:
+            - write:profiles
+            - read:profiles
+
+  /profiles/update/{profile_id}:
+    post:
+      tags:
+        - profiles
+      summary: Update a profile
+      description: Updates the details of a profile based on the provided profile ID.
+      operationId: updateProfile
+      parameters:
+        - name: profile_id
+          in: path
+          description: ID of the profile to update
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Profile details to update
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                profile_name:
+                  type: string
+                  description: Name of the profile
+                  example: "NAME_OF_PROFILE"
+                group_id:
+                  type: integer
+                  description: ID of the profile group
+                  example: 1
+                raw_proxy:  
+                  type: string
+                  description: Proxy settings in the format "type://host:port"
+                  example: "http://proxy.example.com:8080"
+                startup_url:
+                  type: string
+                  description: URL to start with
+                  example: "https://example.com"
+                note:
+                  type: string
+                  description: Additional notes
+                  example: "This is a sample note"
+                user_agent:
+                  type: string
+                  description: User agent string
+                  example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+                browser_version:
+                  type: string
+                  description: Browser version
+                  example: "127"
+              required:
+                - profile_name
+                - group_id
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Cập nhật hồ sơ thành công"
+        '400':
+          description: Bad request, possibly invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid input data"
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Profile not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while updating the profile"
+      security:
+        - api_key: []
+        - profile_auth:
+            - write:profiles
+            - read:profiles
+
+  /profiles/create:
+    post:
+      tags:
+        - profiles
+      summary: Create a new profile
+      description: Creates a new profile with the provided details.
+      operationId: createProfile
+      requestBody:
+        description: Profile details to create
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                profile_name:
+                  type: string
+                  description: Name of the profile
+                  example: "Test profile"
+                group_name:
+                  type: string
+                  description: ID of the profile group
+                  example: "All"
+                raw_proxy:
+                  type: string
+                  description: Proxy settings in the format "type://host:port" (optional)
+                  example: ""
+                startup_urls:
+                  type: array
+                  items:
+                    type: string
+                  description: List of URLs to start with
+                  example: ""
+                is_masked_font:
+                  type: boolean
+                  description: Indicates if the font should be masked
+                  example: true
+                is_noise_canvas:
+                  type: boolean
+                  description: Indicates if canvas noise should be applied
+                  example: false
+                is_noise_webgl:
+                  type: boolean
+                  description: Indicates if WebGL noise should be applied
+                  example: false
+                is_noise_client_rect:
+                  type: boolean
+                  description: Indicates if client rect noise should be applied
+                  example: false
+                is_noise_audio_context:
+                  type: boolean
+                  description: Indicates if audio context noise should be applied
+                  example: true
+                is_random_screen:
+                  type: boolean
+                  description: Indicates if random screen resolution should be used
+                  example: false
+                is_masked_webgl_data:
+                  type: boolean
+                  description: Indicates if WebGL data should be masked
+                  example: true
+                is_masked_media_device:
+                  type: boolean
+                  description: Indicates if media devices should be masked
+                  example: true
+                is_random_os:
+                  type: boolean
+                  description: Indicates if a random OS should be used
+                  example: false
+                os:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      description: OS type (e.g., Windows,macOS,Android,IOS)
+                      example: "Windows"
+                    version:
+                      type: string
+                      description: OS version (e.g.,win7,win8,win10,win11,macos10,macos11,macos12,macos13,android9,android10,android11,android12,android13,android14,ios15,ios14)
+                      example: "win10"
+                webrtc_mode:
+                  type: integer
+                  description: WebRTC mode (1 for disable, otherwise noise)
+                  example: 2
+                browser_version:
+                  type: string
+                  description: Version of the browser
+                  example: "128"
+                user_agent:
+                  type: string
+                  description: User agent string (optional)
+                  example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+      responses:
+        '200':
+          description: Profile created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Profile created successfully"
+                  data:
+                    $ref: '#/components/schemas/Profile'
+        '400':
+          description: Bad request, possibly invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid input data"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while creating the profile"
+      security:
+        - api_key: []
+        - profile_auth:
+            - write:profiles
+
+  /profile/{id}:
+    get:
+      tags:
+        - profiles
+      summary: Retrieve a profile by ID
+      description: Fetches the details of a profile specified by the profile ID.
+      operationId: getProfileById
+      parameters:
+        - name: id
+          in: path
+          description: ID of the profile to retrieve
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "OK"
+                  data:
+                    $ref: '#/components/schemas/Profile'
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Profile not found"
+                  data:
+                    type: object
+                    example: {}
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "An error occurred while retrieving the profile"
+      security:
+        - api_key: []
+        - profile_auth:
+            - read:profiles
+  
+  /profiles:
+    get:
+      tags:
+        - profiles
+      summary: Retrieve a list of profiles
+      description: Returns a list of profiles with optional filters and pagination
+      operationId: getProfiles
+      parameters:
+        - name: group_id
+          in: query
+          description: Filter profiles by group ID
+          schema:
+            type: integer
+            example: 1
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: per_page
+          in: query
+          description: Number of profiles per page
+          schema:
+            type: integer
+            default: 50
+            example: 50
+        - name: sort
+          in: query
+          description: Sorting order (0 = latest, 1 = oldest, 2 = A-Z, 3 = Z-A)
+          schema:
+            type: integer
+            enum: [0, 1, 2, 3]
+            default: 0
+            example: 0
+        - name: search
+          in: query
+          description: Search term for filtering profiles
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Profiles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "success"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Profile'
+        '500':
+          description: Server error
+
+components:
+  schemas:
+    BrowserVersion:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        version:
+          type: string
+          example: "128"
+    OsVersion:
+      type: object
+      properties:
+        osType:
+          type: string
+          description: OS type (e.g., Windows,macOS,Android,IOS)
+          example: "Windows"
+        version:
+          type: string
+          description: OS version (e.g.,win7,win8,win10,win11,macos10,macos11,macos12,macos13,android9,android10,android11,android12,android13,android14,ios15,ios14)
+          example: "win10"
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: "All"
+        sort: 
+          type: integer
+          example: 1
+        created_by: 
+          type: integer
+          example: -1
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-09-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2023-09-02T12:00:00Z"
+      xml:
+        name: group
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID of the profile
+          example: 1
+        name:
+          type: string
+          description: Name of the profile
+          example: "Test profile"
+        raw_proxy:
+          type: string
+          description: Raw proxy settings
+          example: ""
+        browser_type:
+          type: string
+          description: Type of the browser (e.g., Chromium)
+          example: "Chrome"
+        browser_version:
+          type: string
+          description: Version of the browser
+          example: "128.0.0.0"
+        group_id:
+          type: integer
+          description: ID of the profile group
+          example: 1
+        profile_path:
+          type: string
+          description: File path of the profile
+          example: "wBPmeDpCbL-04122023"
+        note:
+          type: string
+          description: Additional notes for the profile
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of when the profile was created
+          example: "2024-09-04T19:33:30.1200267+07:00"

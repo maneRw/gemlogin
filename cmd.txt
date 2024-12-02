@@ -1,0 +1,1 @@
+electron-packager . gemLogin --platform win32 --asar --overwrite --icon="./logo.ico" extraResource="./bin"
